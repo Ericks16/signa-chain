@@ -43,11 +43,24 @@ RUN addgroup --system --gid 1001 nodejs && \
 ENV NODE_ENV=production
 ENV PORT=4000
 
-# Only copy built artifacts and production deps
-COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./dist
+# Keep full monorepo structure so pnpm symlinks resolve correctly at runtime.
+# pnpm does NOT hoist workspace deps to root — each package's node_modules has
+# symlinks into /app/node_modules/.pnpm/<pkg>/node_modules/<pkg>.
+# Flattening the layout breaks those symlinks and causes MODULE_NOT_FOUND errors.
+COPY --from=deps --chown=nestjs:nodejs /app/node_modules ./node_modules
+
+COPY --from=deps --chown=nestjs:nodejs /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=deps --chown=nestjs:nodejs /app/packages/types/node_modules ./packages/types/node_modules
+COPY --from=deps --chown=nestjs:nodejs /app/packages/vc-sdk/node_modules ./packages/vc-sdk/node_modules
+
+COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./apps/api/dist
 COPY --from=builder --chown=nestjs:nodejs /app/packages/types/dist ./packages/types/dist
 COPY --from=builder --chown=nestjs:nodejs /app/packages/vc-sdk/dist ./packages/vc-sdk/dist
-COPY --from=deps --chown=nestjs:nodejs /app/node_modules ./node_modules
+
+# package.json files are required for Node's exports field resolution
+COPY --from=builder --chown=nestjs:nodejs /app/apps/api/package.json ./apps/api/package.json
+COPY --from=builder --chown=nestjs:nodejs /app/packages/types/package.json ./packages/types/package.json
+COPY --from=builder --chown=nestjs:nodejs /app/packages/vc-sdk/package.json ./packages/vc-sdk/package.json
 
 USER nestjs
 
@@ -57,4 +70,4 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD wget -qO- http://localhost:4000/v1/health || exit 1
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "apps/api/dist/main.js"]
