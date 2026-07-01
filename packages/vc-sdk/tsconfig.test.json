@@ -4,6 +4,11 @@
     "module": "CommonJS",
     "moduleResolution": "Node",
     "isolatedModules": false,
-    "esModuleInterop": true
-  }
+    "esModuleInterop": true,
+    "types": ["node", "jest"],
+    "paths": {
+      "@signa-chain/types": ["../types/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "../types/src/**/*"]
 }

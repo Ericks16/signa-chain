@@ -4,11 +4,8 @@
     "outDir": "./dist",
     "composite": true,
     "isolatedModules": true,
-    "types": ["node", "jest"],
-    "paths": {
-      "@signa-chain/types": ["../types/src/index.ts"]
-    }
+    "types": ["node"]
   },
-  "include": ["src/**/*", "../types/src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "src/__tests__"]
 }

@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ValidationPipe, VersioningType, Logger } from '@nestjs/common';
-import helmet from 'helmet';
+import fastifyHelmet from '@fastify/helmet';
 import { AppModule } from './app.module.js';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter.js';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor.js';
@@ -16,7 +16,7 @@ async function bootstrap(): Promise<void> {
   );
 
   // ── Security headers ───────────────────────────────────────────────────── //
-  await app.register(helmet, {
+  await app.register(fastifyHelmet, {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'none'"],

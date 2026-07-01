@@ -47,9 +47,10 @@ export async function verifyCredential(opts: VerifyCredentialOptions): Promise<V
     details.push(merkleCheck);
   }
 
-  const issuerName = opts.resolveIssuerName ? await opts.resolveIssuerName(issuerId) : undefined;
+  const resolvedIssuerName = opts.resolveIssuerName
+    ? await opts.resolveIssuerName(issuerId)
+    : undefined;
 
-  const allCriticalPassed = signatureValid && !isRevoked && !expired;
   const merkleOk = merkleProofValid === null || merkleProofValid === true;
 
   let status: VerificationResult['status'];
@@ -63,7 +64,8 @@ export async function verifyCredential(opts: VerifyCredentialOptions): Promise<V
     status,
     credentialId: credential.id,
     issuerId,
-    issuerName,
+    // exactOptionalPropertyTypes: omit the key entirely when undefined
+    ...(resolvedIssuerName !== undefined ? { issuerName: resolvedIssuerName } : {}),
     checkedAt,
     signatureValid,
     merkleProofValid,

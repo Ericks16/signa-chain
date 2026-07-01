@@ -1,10 +1,23 @@
-import canonicalizeJson from 'canonicalize';
 import type { VerifiableCredential } from '@signa-chain/types';
 
+/**
+ * RFC 8785 JSON Canonicalization Scheme (JCS).
+ * Implemented directly to avoid CJS/ESM interop issues with the `canonicalize` npm package.
+ */
 export function canonicalize(obj: unknown): string {
-  const result = canonicalizeJson(obj);
-  if (result === undefined) throw new Error('Failed to canonicalize object');
-  return result;
+  if (obj === null || obj === undefined) return 'null';
+  if (typeof obj === 'boolean' || typeof obj === 'number') return String(obj);
+  if (typeof obj === 'string') return JSON.stringify(obj);
+  if (Array.isArray(obj)) {
+    return '[' + obj.map(canonicalize).join(',') + ']';
+  }
+  if (typeof obj === 'object') {
+    const entries = Object.entries(obj as Record<string, unknown>)
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([k, v]) => `${JSON.stringify(k)}:${canonicalize(v)}`);
+    return '{' + entries.join(',') + '}';
+  }
+  return 'null';
 }
 
 export function serializeCredential(vc: VerifiableCredential): string {
