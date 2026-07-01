@@ -50,9 +50,9 @@ contract CredentialAnchor is
     mapping(string => IssuerRecord) private _issuers;
     mapping(bytes32 => bool) private _revokedCredentials;
     mapping(uint256 => AnchorRecord) private _anchors;
+    mapping(bytes32 => uint256) private _rootToAnchorId; // O(1) root lookup
 
     uint256 private _anchorCount;
-    uint256 private _anchorNonce;
 
     // ─────────────────────────────── Events ───────────────────────────────── //
 
@@ -126,7 +126,7 @@ contract CredentialAnchor is
         uint32 credentialCount,
         string calldata batchId,
         string calldata issuerId
-    ) external whenNotPaused returns (uint256 anchorId) {
+    ) external onlyRole(ISSUER_MANAGER_ROLE) whenNotPaused returns (uint256 anchorId) {
         if (merkleRoot == bytes32(0)) revert InvalidMerkleRoot();
         if (bytes(batchId).length == 0) revert EmptyBatchId();
         if (credentialCount == 0) revert InvalidCredentialCount();
@@ -145,12 +145,13 @@ contract CredentialAnchor is
             credentialCount: credentialCount,
             batchId: batchId
         });
+        _rootToAnchorId[merkleRoot] = anchorId;
 
         emit MerkleRootAnchored(anchorId, merkleRoot, credentialCount, batchId, block.timestamp);
     }
 
     /**
-     * Cualquiera puede consultar si una raíz de Merkle está anclada.
+     * Cualquiera puede consultar si una raíz de Merkle está anclada (O(1)).
      * Retorna (true, anchorId) si se encuentra, (false, 0) si no.
      *
      * NOTA: La presencia on-chain solo prueba existencia temporal.
@@ -158,12 +159,8 @@ contract CredentialAnchor is
      * y la firma EdDSA del emisor.
      */
     function isRootAnchored(bytes32 merkleRoot) external view returns (bool found, uint256 anchorId) {
-        for (uint256 i = 1; i <= _anchorCount; i++) {
-            if (_anchors[i].merkleRoot == merkleRoot) {
-                return (true, i);
-            }
-        }
-        return (false, 0);
+        anchorId = _rootToAnchorId[merkleRoot];
+        found = anchorId != 0;
     }
 
     function getAnchor(uint256 anchorId) external view returns (AnchorRecord memory) {

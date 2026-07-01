@@ -11,11 +11,25 @@ out/
 # Turbo
 .turbo/
 
-# Environment
+# Environment — NEVER commit real values
 .env
 .env.local
 .env.*.local
+.env.production
+.env.staging
 !.env.example
+
+# Key files — NEVER commit private keys
+*.pem
+*.key
+*.p12
+*.pfx
+keys/
+keystore/
+
+# Deployment secrets
+.vercel/
+.railway/
 
 # Hardhat / Foundry
 contracts/artifacts/

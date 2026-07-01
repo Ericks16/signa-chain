@@ -123,9 +123,14 @@ describe('CredentialAnchor', () => {
     });
 
     it('anchors a Merkle root and emits MerkleRootAnchored', async () => {
-      await expect(anchor.connect(admin).anchorBatch(ROOT, COUNT, BATCH_ID, SAMPLE_DID))
+      const tx = await anchor.connect(admin).anchorBatch(ROOT, COUNT, BATCH_ID, SAMPLE_DID);
+      const receipt = await tx.wait();
+      if (!receipt) throw new Error('No receipt');
+      const block = await ethers.provider.getBlock(receipt.blockNumber);
+      if (!block) throw new Error('No block');
+      await expect(tx)
         .to.emit(anchor, 'MerkleRootAnchored')
-        .withArgs(1, ROOT, COUNT, BATCH_ID, await getLastBlockTimestamp());
+        .withArgs(1, ROOT, COUNT, BATCH_ID, block.timestamp);
     });
 
     it('increments anchor count', async () => {
