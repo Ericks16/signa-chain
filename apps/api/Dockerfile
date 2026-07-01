@@ -22,6 +22,7 @@ COPY --from=deps /app/packages/types/node_modules ./packages/types/node_modules
 COPY --from=deps /app/packages/vc-sdk/node_modules ./packages/vc-sdk/node_modules
 COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 
+COPY package.json pnpm-workspace.yaml ./
 COPY tsconfig.base.json ./
 COPY packages/types ./packages/types
 COPY packages/vc-sdk ./packages/vc-sdk
