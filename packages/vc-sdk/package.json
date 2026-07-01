@@ -2,6 +2,7 @@
   "name": "@signa-chain/vc-sdk",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -13,7 +14,7 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-vm-modules ../../node_modules/.bin/jest",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
@@ -26,6 +27,7 @@
   },
   "devDependencies": {
     "typescript": "*",
+    "@types/node": "^24.0.4",
     "@types/uuid": "^10.0.0",
     "jest": "^29.7.0",
     "@types/jest": "^29.5.14",
