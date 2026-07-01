@@ -1,0 +1,19 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "cd ../.. && pnpm --filter @signa-chain/types build && pnpm --filter @signa-chain/vc-sdk build && pnpm --filter @signa-chain/ui build && pnpm --filter @signa-chain/web build",
+  "installCommand": "npm install -g pnpm@11.9.0 && pnpm install --frozen-lockfile",
+  "outputDirectory": ".next",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "no-referrer" }
+      ]
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_API_URL": "@next_public_api_url"
+  }
+}

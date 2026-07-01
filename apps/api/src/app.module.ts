@@ -6,11 +6,13 @@ import { CredentialModule } from './modules/credential/credential.module.js';
 import { VerificationModule } from './modules/verification/verification.module.js';
 import { AnchoringModule } from './modules/anchoring/anchoring.module.js';
 import { IdentityModule } from './modules/identity/identity.module.js';
+import { HealthModule } from './modules/health/health.module.js';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
+    HealthModule,
     IssuerModule,
     CredentialModule,
     VerificationModule,

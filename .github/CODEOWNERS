@@ -1,0 +1,9 @@
+# CODEOWNERS — all changes require review from Ericks16
+* @Ericks16
+
+# Contracts require extra scrutiny
+/contracts/ @Ericks16
+
+# Security-sensitive files
+/SECURITY.md @Ericks16
+/.github/ @Ericks16
