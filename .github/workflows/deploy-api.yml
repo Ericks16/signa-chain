@@ -22,8 +22,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
       - name: Deploy to Railway
-        uses: railwayapp/nixpacks-action@v1
-        with:
-          token: ${{ secrets.RAILWAY_TOKEN }}
-          service: signa-chain-api
+        run: railway up --service signa-chain-api --ci
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
