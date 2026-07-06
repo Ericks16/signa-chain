@@ -26,6 +26,6 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy to Railway
-        run: railway up --service signa-chain-api --ci
+        run: railway up --service "@signa-chain/api" --ci
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
