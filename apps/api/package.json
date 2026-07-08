@@ -14,6 +14,7 @@
     "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/database/data-source.ts",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/data-source.ts",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
+    "migration:run:prod": "typeorm migration:run -d dist/database/data-source.js",
     "seed:issuer": "node dist/database/seeds/seed-issuer.js"
   },
   "dependencies": {
@@ -37,7 +38,8 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "@fastify/helmet": "^13.0.1",
-    "ethers": "^6.14.3"
+    "ethers": "^6.14.3",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "typescript": "*",
@@ -54,7 +56,6 @@
     "ts-jest": "^29.3.4",
     "supertest": "^7.1.1",
     "@types/supertest": "^6.0.3",
-    "ts-node": "^10.9.2",
-    "dotenv": "^16.4.5"
+    "ts-node": "^10.9.2"
   }
 }

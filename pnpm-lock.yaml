@@ -71,6 +71,9 @@ importers:
       class-validator:
         specifier: ^0.14.2
         version: 0.14.4
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.6.1
       ethers:
         specifier: ^6.14.3
         version: 6.17.0
@@ -120,9 +123,6 @@ importers:
       '@types/supertest':
         specifier: ^6.0.3
         version: 6.0.3
-      dotenv:
-        specifier: ^16.4.5
-        version: 16.6.1
       fastify:
         specifier: '*'
         version: 5.8.5
