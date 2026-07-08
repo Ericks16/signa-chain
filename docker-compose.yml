@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: signachain
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: signachain_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - signachain_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U signachain -d signachain_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  signachain_postgres_data:

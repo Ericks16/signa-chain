@@ -10,7 +10,11 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "clean": "rm -rf dist *.tsbuildinfo"
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/database/data-source.ts",
+    "migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/data-source.ts",
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
+    "seed:issuer": "node dist/database/seeds/seed-issuer.js"
   },
   "dependencies": {
     "@signa-chain/types": "workspace:*",
@@ -49,6 +53,8 @@
     "@types/jest": "^29.5.14",
     "ts-jest": "^29.3.4",
     "supertest": "^7.1.1",
-    "@types/supertest": "^6.0.3"
+    "@types/supertest": "^6.0.3",
+    "ts-node": "^10.9.2",
+    "dotenv": "^16.4.5"
   }
 }

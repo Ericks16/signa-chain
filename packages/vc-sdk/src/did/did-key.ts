@@ -13,9 +13,13 @@ export interface CreateDidKeyResult {
   didDocument: DIDDocument;
 }
 
-export async function createDidKey(): Promise<CreateDidKeyResult> {
-  const { privateKey, publicKey } = await generateEd25519KeyPair();
+export interface DerivedDidKey {
+  did: string;
+  publicKeyMultibase: string;
+  didDocument: DIDDocument;
+}
 
+export function deriveDidKeyDocument(publicKey: Uint8Array): DerivedDidKey {
   const multicodecKey = new Uint8Array(ED25519_MULTICODEC_PREFIX.length + publicKey.length);
   multicodecKey.set(ED25519_MULTICODEC_PREFIX);
   multicodecKey.set(publicKey, ED25519_MULTICODEC_PREFIX.length);
@@ -38,6 +42,13 @@ export async function createDidKey(): Promise<CreateDidKeyResult> {
     authentication: [vmId],
     assertionMethod: [vmId],
   };
+
+  return { did, publicKeyMultibase, didDocument };
+}
+
+export async function createDidKey(): Promise<CreateDidKeyResult> {
+  const { privateKey, publicKey } = await generateEd25519KeyPair();
+  const { did, didDocument } = deriveDidKeyDocument(publicKey);
 
   return { did, privateKey, publicKey, didDocument };
 }

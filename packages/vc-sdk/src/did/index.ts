@@ -1,2 +1,2 @@
-export { createDidKey, resolveDid, extractPublicKey } from './did-key.js';
-export type { CreateDidKeyResult } from './did-key.js';
+export { createDidKey, resolveDid, extractPublicKey, deriveDidKeyDocument } from './did-key.js';
+export type { CreateDidKeyResult, DerivedDidKey } from './did-key.js';

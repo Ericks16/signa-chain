@@ -1,4 +1,5 @@
-import { createDidKey, resolveDid, extractPublicKey } from '../did/did-key.js';
+import { createDidKey, resolveDid, extractPublicKey, deriveDidKeyDocument } from '../did/did-key.js';
+import { generateEd25519KeyPair } from '../crypto/ed25519.js';
 
 describe('DID Key', () => {
   it('creates a valid did:key DID', async () => {
@@ -31,5 +32,17 @@ describe('DID Key', () => {
     const { did, publicKey } = await createDidKey();
     const extracted = extractPublicKey(did);
     expect(extracted).toEqual(publicKey);
+  });
+
+  it('deriveDidKeyDocument produces the same DID as createDidKey for the same public key', async () => {
+    const { publicKey } = await generateEd25519KeyPair();
+    const derived = deriveDidKeyDocument(publicKey);
+
+    expect(derived.did).toMatch(/^did:key:z[1-9A-HJ-NP-Za-km-z]+$/);
+    expect(derived.didDocument.id).toBe(derived.did);
+    expect(derived.didDocument.verificationMethod[0]?.publicKeyMultibase).toBe(
+      derived.publicKeyMultibase,
+    );
+    expect(extractPublicKey(derived.did)).toEqual(publicKey);
   });
 });
