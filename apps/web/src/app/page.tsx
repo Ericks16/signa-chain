@@ -1,10 +1,13 @@
+import { VerifySearchForm } from './verify-search-form';
+
 export default function HomePage(): React.ReactElement {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      <h1 className="text-4xl font-bold tracking-tight text-white">SIGNA CHAIN</h1>
-      <p className="mt-4 text-lg text-gray-400">
-        Credenciales verificables — en construcción
+    <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-8 text-center">
+      <h1 className="text-4xl font-bold tracking-tight text-foreground">SIGNA CHAIN</h1>
+      <p className="max-w-md text-lg text-muted">
+        Verifica cualquier diploma o certificado en segundos, sin llamar a la universidad.
       </p>
+      <VerifySearchForm />
     </main>
   );
 }
