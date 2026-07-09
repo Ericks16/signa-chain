@@ -40,6 +40,18 @@ export interface AcademicCredentialSubject extends CredentialSubject {
   honors?: string;
 }
 
+export interface IssueCredentialRequest {
+  subjectDid: string;
+  givenName: string;
+  familyName: string;
+  degreeType: 'bachelor' | 'master' | 'doctorate' | 'certificate' | 'diploma';
+  degreeName: string;
+  institution: string;
+  graduationDate: string;
+  honors?: string;
+  expirationDate?: string;
+}
+
 export interface MerkleAnchoredCredential {
   credential: VerifiableCredential;
   merkleProof: MerkleProof;

@@ -1,4 +1,5 @@
 import { createDidKey } from '../did/did-key.js';
+import { signBytes } from '../crypto/ed25519.js';
 import { issueCredential } from '../credential/issuer.js';
 import { deserializeCredential, serializeCredential } from '../credential/serializer.js';
 import { verifyCredential } from '../verification/verifier.js';
@@ -12,7 +13,7 @@ describe('Credential issuance and verification — full flow', () => {
 
     const vc = await issueCredential({
       issuerDid: issuer.did,
-      issuerPrivateKey: issuer.privateKey,
+      sign: (msg) => signBytes(msg, issuer.privateKey),
       subjectDid: holder.did,
       credentialSubject: {
         givenName: 'María',
@@ -37,7 +38,7 @@ describe('Credential issuance and verification — full flow', () => {
 
     const vc = await issueCredential({
       issuerDid: issuer.did,
-      issuerPrivateKey: issuer.privateKey,
+      sign: (msg) => signBytes(msg, issuer.privateKey),
       subjectDid: holder.did,
       credentialSubject: { degreeName: 'Computer Science' },
     });
@@ -55,7 +56,7 @@ describe('Credential issuance and verification — full flow', () => {
 
     const vc = await issueCredential({
       issuerDid: issuer.did,
-      issuerPrivateKey: issuer.privateKey,
+      sign: (msg) => signBytes(msg, issuer.privateKey),
       subjectDid: holder.did,
       credentialSubject: { degreeName: 'Original Degree' },
     });
@@ -76,7 +77,7 @@ describe('Credential issuance and verification — full flow', () => {
 
     const vc = await issueCredential({
       issuerDid: issuer.did,
-      issuerPrivateKey: issuer.privateKey,
+      sign: (msg) => signBytes(msg, issuer.privateKey),
       subjectDid: holder.did,
       credentialSubject: { degreeName: 'Revoked Degree' },
     });
@@ -94,7 +95,7 @@ describe('Credential issuance and verification — full flow', () => {
 
     const vc = await issueCredential({
       issuerDid: issuer.did,
-      issuerPrivateKey: issuer.privateKey,
+      sign: (msg) => signBytes(msg, issuer.privateKey),
       subjectDid: holder.did,
       credentialSubject: { degreeName: 'Old Credential' },
       expirationDate: pastDate,
@@ -111,7 +112,7 @@ describe('Credential issuance and verification — full flow', () => {
 
     const vc = await issueCredential({
       issuerDid: issuer.did,
-      issuerPrivateKey: issuer.privateKey,
+      sign: (msg) => signBytes(msg, issuer.privateKey),
       subjectDid: holder.did,
       credentialSubject: { degreeName: 'Ingeniería' },
     });
@@ -131,7 +132,7 @@ describe('Merkle batch + verification', () => {
       ['Ana', 'Luis', 'Sofia'].map((name) =>
         issueCredential({
           issuerDid: issuer.did,
-          issuerPrivateKey: issuer.privateKey,
+          sign: (msg) => signBytes(msg, issuer.privateKey),
           subjectDid: `did:key:z${name}`,
           credentialSubject: { givenName: name },
         }),

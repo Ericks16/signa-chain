@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { VerifiableCredential, CredentialSubject } from '@signa-chain/types';
-import { signBytes } from '../crypto/ed25519.js';
 import { canonicalize } from './serializer.js';
 
 const VC_CONTEXTS = [
@@ -10,7 +9,7 @@ const VC_CONTEXTS = [
 
 export interface IssueCredentialOptions {
   issuerDid: string;
-  issuerPrivateKey: Uint8Array;
+  sign: (message: Uint8Array) => Promise<Uint8Array>;
   subjectDid: string;
   credentialSubject: Omit<CredentialSubject, 'id'>;
   additionalTypes?: string[];
@@ -39,7 +38,7 @@ export async function issueCredential(opts: IssueCredentialOptions): Promise<Ver
 
   const unsignedCanonical = canonicalize(credential);
   const messageBytes = new TextEncoder().encode(unsignedCanonical);
-  const signatureBytes = await signBytes(messageBytes, opts.issuerPrivateKey);
+  const signatureBytes = await opts.sign(messageBytes);
   const proofValue = Buffer.from(signatureBytes).toString('base64url');
 
   const vmId = `${opts.issuerDid}#${opts.issuerDid.replace('did:key:', '')}`;
