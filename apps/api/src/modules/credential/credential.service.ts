@@ -67,4 +67,8 @@ export class CredentialService {
     }
     return entity;
   }
+
+  findByCredentialId(credentialId: string): Promise<CredentialEntity | null> {
+    return this.repo.findOne({ where: { credentialId } });
+  }
 }
