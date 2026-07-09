@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import type { VerifiableCredential } from '@signa-chain/types';
 import { JwtAuthGuard } from '../issuer/auth/jwt-auth.guard.js';
 import { CurrentIssuer } from '../issuer/auth/current-issuer.decorator.js';
@@ -30,5 +30,13 @@ export class CredentialController {
     @Param('credentialId') credentialId: string,
   ): Promise<CredentialEntity> {
     return this.credentialService.findOne(issuerId, credentialId);
+  }
+
+  @Patch(':credentialId/revoke')
+  revoke(
+    @CurrentIssuer() issuerId: string,
+    @Param('credentialId') credentialId: string,
+  ): Promise<CredentialEntity> {
+    return this.credentialService.revoke(issuerId, credentialId);
   }
 }
