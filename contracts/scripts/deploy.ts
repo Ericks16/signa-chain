@@ -1,7 +1,11 @@
 import { ethers, upgrades } from 'hardhat';
 
 async function main(): Promise<void> {
-  const [deployer] = await ethers.getSigners();
+  const signers = await ethers.getSigners();
+  const deployer = signers[0];
+  if (!deployer) {
+    throw new Error('No deployer signer available');
+  }
   console.warn(`Deploying with account: ${deployer.address}`);
 
   const balance = await ethers.provider.getBalance(deployer.address);

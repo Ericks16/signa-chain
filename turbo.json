@@ -16,6 +16,9 @@
     "typecheck": {
       "dependsOn": ["^build"]
     },
+    "@signa-chain/contracts#typecheck": {
+      "dependsOn": ["^build", "build"]
+    },
     "test": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"]
