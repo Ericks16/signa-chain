@@ -5,6 +5,7 @@ import { deriveDidKeyDocument } from '@signa-chain/vc-sdk';
 import { AppModule } from '../../app.module.js';
 import { IssuerService } from '../../modules/issuer/issuer.service.js';
 import { KMS_PROVIDER_TOKEN, type KmsProvider } from '../../common/kms/index.js';
+import { BlockchainService } from '../../common/blockchain/blockchain.service.js';
 
 async function seed(): Promise<void> {
   const app = await NestFactory.createApplicationContext(AppModule, {
@@ -14,6 +15,7 @@ async function seed(): Promise<void> {
   try {
     const issuerService = app.get(IssuerService);
     const kms = app.get<KmsProvider>(KMS_PROVIDER_TOKEN);
+    const blockchain = app.get(BlockchainService);
 
     if (await issuerService.existsAny()) {
       console.warn('Issuer already exists — seed skipped (idempotent).');
@@ -49,6 +51,14 @@ async function seed(): Promise<void> {
     });
 
     console.warn(`Seeded issuer ${entity.email} with DID ${entity.did}`);
+
+    const txHash = await blockchain.registerIssuerOnChain(did, publicKeyMultibase);
+    if (txHash) {
+      await issuerService.markOnChainRegistered(entity.id, txHash);
+      console.warn(`Registered issuer on-chain — tx ${txHash}`);
+    } else {
+      console.warn('On-chain registration skipped — CredentialAnchor not configured.');
+    }
   } finally {
     await app.close();
   }

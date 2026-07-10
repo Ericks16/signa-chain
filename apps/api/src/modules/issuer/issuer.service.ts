@@ -52,4 +52,8 @@ export class IssuerService {
 
     return this.repo.save(entity);
   }
+
+  async markOnChainRegistered(id: string, txHash: string): Promise<void> {
+    await this.repo.update({ id }, { onChainRegistered: true, registrationTxHash: txHash });
+  }
 }

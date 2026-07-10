@@ -15,7 +15,8 @@
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/data-source.ts",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
     "migration:run:prod": "typeorm migration:run -d dist/database/data-source.js",
-    "seed:issuer": "node dist/database/seeds/seed-issuer.js"
+    "seed:issuer": "node dist/database/seeds/seed-issuer.js",
+    "register-issuer:onchain": "node dist/database/seeds/register-issuer-onchain.js"
   },
   "dependencies": {
     "@signa-chain/types": "workspace:*",
