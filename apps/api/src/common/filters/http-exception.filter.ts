@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import * as Sentry from '@sentry/node';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -29,6 +30,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     // Never leak stack traces or internal details to the client
     if (status >= 500) {
+      Sentry.captureException(exception);
       this.logger.error(
         `Unhandled exception: ${exception instanceof Error ? exception.message : String(exception)}`,
         exception instanceof Error ? exception.stack : undefined,

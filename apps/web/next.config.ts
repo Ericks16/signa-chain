@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
   transpilePackages: ['@signa-chain/ui', '@signa-chain/vc-sdk', '@signa-chain/types'],
@@ -29,4 +30,16 @@ const nextConfig: NextConfig = {
   env: {},
 };
 
-export default nextConfig;
+// No account/DSN exists yet — org/project/authToken are only added once the
+// user creates a Sentry project, at which point the plugin picks them up from
+// env vars with no further code changes needed.
+export default withSentryConfig(nextConfig, {
+  ...(process.env['SENTRY_ORG'] ? { org: process.env['SENTRY_ORG'] } : {}),
+  ...(process.env['SENTRY_PROJECT'] ? { project: process.env['SENTRY_PROJECT'] } : {}),
+  ...(process.env['SENTRY_AUTH_TOKEN'] ? { authToken: process.env['SENTRY_AUTH_TOKEN'] } : {}),
+  silent: true,
+  tunnelRoute: '/monitoring',
+  webpack: {
+    treeshake: { removeDebugLogging: true },
+  },
+});
