@@ -8,6 +8,8 @@ import { verifyBytes } from '../crypto/ed25519.js';
 import { extractPublicKey } from '../did/did-key.js';
 import { canonicalize } from '../credential/serializer.js';
 import { MerkleTree } from '../merkle/tree.js';
+import { buildCredentialLeaf } from '../merkle/credential-merkle.js';
+import { sha256Bytes } from '../crypto/hash.js';
 
 export interface VerifyCredentialOptions {
   credential: VerifiableCredential;
@@ -42,7 +44,7 @@ export async function verifyCredential(opts: VerifyCredentialOptions): Promise<V
   });
 
   if (merkleProof && anchoredRootHex) {
-    const merkleCheck = checkMerkleProof(merkleProof, anchoredRootHex);
+    const merkleCheck = checkMerkleProof(credential, merkleProof, anchoredRootHex);
     merkleProofValid = merkleCheck.passed;
     details.push(merkleCheck);
   }
@@ -124,8 +126,25 @@ function checkExpiry(credential: VerifiableCredential): VerificationDetail {
   };
 }
 
-function checkMerkleProof(proof: MerkleProof, anchoredRootHex: string): VerificationDetail {
+function checkMerkleProof(
+  credential: VerifiableCredential,
+  proof: MerkleProof,
+  anchoredRootHex: string,
+): VerificationDetail {
   try {
+    // MerkleTree hashes each raw leaf once more internally, so the leaf actually
+    // proven is sha256(buildCredentialLeaf(credential)) — matching buildMerkleBatch().
+    const expectedLeaf =
+      '0x' + Buffer.from(sha256Bytes(buildCredentialLeaf(credential))).toString('hex');
+    if (expectedLeaf !== proof.leaf) {
+      return {
+        check: 'merkle_proof',
+        passed: false,
+        message:
+          'Merkle proof leaf does not correspond to this credential — the stored proof may belong to a different credential',
+      };
+    }
+
     const valid = MerkleTree.verify(proof, anchoredRootHex);
     return {
       check: 'merkle_proof',

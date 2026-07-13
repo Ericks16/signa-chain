@@ -2,8 +2,9 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import type { Issuer } from '@signa-chain/types';
 import { getSessionToken } from '../../lib/session';
-import { logoutAction, revokeAction } from './actions';
+import { logoutAction } from './actions';
 import { AnchorBatchButton } from './anchor-batch-button';
+import { RevokeButton } from './revoke-button';
 
 interface CredentialRecord {
   id: string;
@@ -104,14 +105,7 @@ export default async function PortalPage(): Promise<React.ReactElement> {
               >
                 {cred.status === 'issued' ? 'Emitida' : 'Revocada'}
               </span>
-              {cred.status === 'issued' && (
-                <form action={revokeAction}>
-                  <input type="hidden" name="credentialId" value={cred.credentialId} />
-                  <button type="submit" className="text-xs text-danger hover:underline">
-                    Revocar
-                  </button>
-                </form>
-              )}
+              {cred.status === 'issued' && <RevokeButton credentialId={cred.credentialId} />}
             </div>
           </div>
         ))}

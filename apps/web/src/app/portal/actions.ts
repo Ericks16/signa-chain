@@ -59,10 +59,17 @@ export async function anchorBatchAction(
   };
 }
 
-export async function revokeAction(formData: FormData): Promise<void> {
+export interface RevokeState {
+  error?: string;
+}
+
+export async function revokeAction(
+  _prevState: RevokeState,
+  formData: FormData,
+): Promise<RevokeState> {
   const credentialId = formData.get('credentialId');
   if (typeof credentialId !== 'string' || !credentialId) {
-    return;
+    return { error: 'Credencial inválida.' };
   }
 
   const token = await getSessionToken();
@@ -71,10 +78,26 @@ export async function revokeAction(formData: FormData): Promise<void> {
   }
 
   const apiUrl = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:4000';
-  await fetch(`${apiUrl}/v1/credentials/${encodeURIComponent(credentialId)}/revoke`, {
-    method: 'PATCH',
-    headers: { Authorization: `Bearer ${token}` },
-  });
+
+  let res: Response;
+  try {
+    res = await fetch(`${apiUrl}/v1/credentials/${encodeURIComponent(credentialId)}/revoke`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    });
+  } catch {
+    return { error: 'No se pudo conectar con el servidor. Intenta de nuevo.' };
+  }
+
+  if (res.status === 401) {
+    redirect('/portal/login');
+  }
+
+  if (!res.ok) {
+    return { error: 'No se pudo revocar la credencial. Intenta de nuevo.' };
+  }
 
   revalidatePath('/portal');
+  return {};
 }
