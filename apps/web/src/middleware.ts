@@ -2,10 +2,17 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const SESSION_COOKIE = 'sc_session';
+const HOLDER_SESSION_COOKIE = 'sc_holder_session';
 const isDev = process.env.NODE_ENV === 'development';
 
 function isProtectedPortalRoute(pathname: string): boolean {
   return pathname.startsWith('/portal') && pathname !== '/portal/login';
+}
+
+const PUBLIC_WALLET_ROUTES = ['/wallet/login', '/wallet/register'];
+
+function isProtectedWalletRoute(pathname: string): boolean {
+  return pathname.startsWith('/wallet') && !PUBLIC_WALLET_ROUTES.includes(pathname);
 }
 
 function buildCsp(nonce: string): string {
@@ -29,6 +36,15 @@ export function middleware(request: NextRequest): NextResponse {
 
   if (isProtectedPortalRoute(request.nextUrl.pathname) && !request.cookies.has(SESSION_COOKIE)) {
     const response = NextResponse.redirect(new URL('/portal/login', request.url));
+    response.headers.set('Content-Security-Policy', csp);
+    return response;
+  }
+
+  if (
+    isProtectedWalletRoute(request.nextUrl.pathname) &&
+    !request.cookies.has(HOLDER_SESSION_COOKIE)
+  ) {
+    const response = NextResponse.redirect(new URL('/wallet/login', request.url));
     response.headers.set('Content-Security-Policy', csp);
     return response;
   }

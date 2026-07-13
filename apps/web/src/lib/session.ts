@@ -23,7 +23,7 @@ export async function clearSessionCookie(): Promise<void> {
   store.delete(SESSION_COOKIE);
 }
 
-function decodeJwtExpiry(token: string): Date {
+export function decodeJwtExpiry(token: string): Date {
   const payload = token.split('.')[1];
   if (!payload) {
     throw new Error('Malformed JWT: missing payload segment');
