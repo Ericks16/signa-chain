@@ -1,0 +1,18 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "..",
+  "testEnvironment": "node",
+  "testRegex": "test/.*\\.e2e-spec\\.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": ["ts-jest", { "tsconfig": "tsconfig.json" }]
+  },
+  "moduleNameMapper": {
+    "^@signa-chain/vc-sdk$": "<rootDir>/../../packages/vc-sdk/src/index.ts",
+    "^@signa-chain/types$": "<rootDir>/../../packages/types/src/index.ts",
+    "^(\\.{1,2}/.*)\\.js$": "$1"
+  },
+  "transformIgnorePatterns": ["node_modules/(?!.*@noble)"],
+  "setupFiles": ["<rootDir>/test/setup-env.ts"],
+  "globalSetup": "<rootDir>/test/global-setup.ts",
+  "testTimeout": 30000
+}

@@ -87,11 +87,47 @@ jobs:
       - name: Run contract tests
         run: pnpm --filter @signa-chain/contracts test
 
+  # ── API e2e tests ──────────────────────────────────────────────────────── #
+  test-api:
+    name: API e2e Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: signachain
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: signachain_dev
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U signachain -d signachain_dev"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run API e2e tests
+        run: pnpm --filter @signa-chain/api run test:e2e
+
   # ── Build check ───────────────────────────────────────────────────────── #
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [quality, test-sdk, test-contracts]
+    needs: [quality, test-sdk, test-contracts, test-api]
     steps:
       - uses: actions/checkout@v4
 
