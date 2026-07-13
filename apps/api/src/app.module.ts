@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { IssuerModule } from './modules/issuer/issuer.module.js';
+import { HolderModule } from './modules/holder/holder.module.js';
 import { CredentialModule } from './modules/credential/credential.module.js';
 import { VerificationModule } from './modules/verification/verification.module.js';
 import { AnchoringModule } from './modules/anchoring/anchoring.module.js';
@@ -25,6 +26,7 @@ import { HealthModule } from './modules/health/health.module.js';
     }),
     HealthModule,
     IssuerModule,
+    HolderModule,
     CredentialModule,
     VerificationModule,
     AnchoringModule,

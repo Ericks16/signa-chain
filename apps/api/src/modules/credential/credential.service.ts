@@ -72,6 +72,10 @@ export class CredentialService {
     return this.repo.findOne({ where: { credentialId } });
   }
 
+  findBySubjectDid(subjectDid: string): Promise<CredentialEntity[]> {
+    return this.repo.find({ where: { subjectDid }, order: { createdAt: 'DESC' } });
+  }
+
   async revoke(issuerId: string, credentialId: string): Promise<CredentialEntity> {
     const entity = await this.findOne(issuerId, credentialId);
     if (entity.status === 'revoked') {
