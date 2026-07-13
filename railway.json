@@ -6,7 +6,7 @@
   },
   "deploy": {
     "startCommand": "node dist/main.js",
-    "preDeployCommand": "npm run migration:run:prod && npm run seed:issuer",
+    "preDeployCommand": "npm run migration:run:prod && npm run seed:issuer && npm run register-issuer:onchain",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 30,
     "restartPolicyType": "ON_FAILURE",
