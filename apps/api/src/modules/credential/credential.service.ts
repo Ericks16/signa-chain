@@ -1,5 +1,11 @@
 import { randomUUID } from 'node:crypto';
-import { Inject, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { keccak256, toUtf8Bytes } from 'ethers';
@@ -21,6 +27,8 @@ export interface AnchorBatchSummary {
 
 @Injectable()
 export class CredentialService {
+  private readonly logger = new Logger(CredentialService.name);
+
   constructor(
     @InjectRepository(CredentialEntity)
     private readonly repo: Repository<CredentialEntity>,
@@ -89,7 +97,10 @@ export class CredentialService {
   }
 
   async revoke(issuerId: string, credentialId: string): Promise<CredentialEntity> {
-    const entity = await this.findOne(issuerId, credentialId);
+    const [entity, issuer] = await Promise.all([
+      this.findOne(issuerId, credentialId),
+      this.issuerService.findById(issuerId),
+    ]);
     if (entity.status === 'revoked') {
       return entity;
     }
@@ -97,14 +108,21 @@ export class CredentialService {
     entity.status = 'revoked';
     entity.revokedAt = new Date();
 
-    const issuer = await this.issuerService.findById(issuerId);
-    if (issuer) {
+    if (issuer?.onChainRegistered) {
       const credentialHash = keccak256(toUtf8Bytes(entity.credentialId));
-      const txHash = await this.blockchainService.revokeCredentialOnChain(
-        credentialHash,
-        issuer.did,
-      );
-      entity.revocationTxHash = txHash;
+      try {
+        entity.revocationTxHash = await this.blockchainService.revokeCredentialOnChain(
+          credentialHash,
+          issuer.did,
+        );
+      } catch (err) {
+        // On-chain revocation is a defense-in-depth signal, not the source of truth —
+        // the DB status column below is what verification actually checks. A transient
+        // chain failure (gas, RPC timeout, revert) must not block the off-chain revocation.
+        this.logger.warn(
+          `On-chain revocation failed for ${entity.credentialId}: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
     }
 
     return this.repo.save(entity);
@@ -122,46 +140,62 @@ export class CredentialService {
     if (!issuer) {
       throw new NotFoundException('Issuer not found');
     }
-
-    const unanchored = await this.repo.find({
-      where: { issuerId, status: 'issued', merkleRoot: IsNull() },
-    });
-    if (unanchored.length === 0) {
-      throw new NotFoundException('No unanchored credentials to batch');
-    }
-
-    const batchId = randomUUID();
-    const batch = buildMerkleBatch(unanchored.map((c) => c.vc));
-
-    const result = await this.blockchainService.anchorBatch(
-      batch.root,
-      unanchored.length,
-      batchId,
-      issuer.did,
-    );
-    if (!result) {
+    if (!issuer.onChainRegistered) {
       throw new ServiceUnavailableException(
-        'CredentialAnchor is not configured — cannot anchor on-chain',
+        'This issuer is not yet registered on CredentialAnchor — cannot anchor on-chain',
       );
     }
 
-    const byCredentialId = new Map(batch.credentials.map((c) => [c.credential.id, c]));
-    for (const entity of unanchored) {
-      const anchored = byCredentialId.get(entity.credentialId);
-      if (!anchored) continue;
-      entity.merkleProof = anchored.merkleProof;
-      entity.merkleRoot = batch.root;
-      entity.anchorTxHash = result.txHash;
-      entity.anchorBlockNumber = result.blockNumber;
-    }
-    await this.repo.save(unanchored);
+    // Two concurrent batch requests for the same issuer would otherwise both read the
+    // same unanchored rows, submit two separate on-chain anchors, and race to overwrite
+    // each other's merkleProof/merkleRoot on save. pg_advisory_xact_lock serializes
+    // anchorPendingBatch() calls for this issuer and auto-releases at the end of the
+    // transaction — unlike pg_advisory_lock, it can't be stranded by connection pooling
+    // (session-level locks must be released on the exact connection that took them,
+    // which a pool doesn't guarantee).
+    return this.repo.manager.transaction(async (manager) => {
+      await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [issuerId]);
 
-    return {
-      batchId,
-      merkleRoot: batch.root,
-      anchorTxHash: result.txHash,
-      anchorBlockNumber: result.blockNumber,
-      credentialCount: unanchored.length,
-    };
+      const unanchored = await manager.find(CredentialEntity, {
+        where: { issuerId, status: 'issued', merkleRoot: IsNull() },
+      });
+      if (unanchored.length === 0) {
+        throw new NotFoundException('No unanchored credentials to batch');
+      }
+
+      const batchId = randomUUID();
+      const batch = buildMerkleBatch(unanchored.map((c) => c.vc));
+
+      const result = await this.blockchainService.anchorBatch(
+        batch.root,
+        unanchored.length,
+        batchId,
+        issuer.did,
+      );
+      if (!result) {
+        throw new ServiceUnavailableException(
+          'CredentialAnchor is not configured — cannot anchor on-chain',
+        );
+      }
+
+      const byCredentialId = new Map(batch.credentials.map((c) => [c.credential.id, c]));
+      for (const entity of unanchored) {
+        const anchored = byCredentialId.get(entity.credentialId);
+        if (!anchored) continue;
+        entity.merkleProof = anchored.merkleProof;
+        entity.merkleRoot = batch.root;
+        entity.anchorTxHash = result.txHash;
+        entity.anchorBlockNumber = result.blockNumber;
+      }
+      await manager.save(unanchored);
+
+      return {
+        batchId,
+        merkleRoot: batch.root,
+        anchorTxHash: result.txHash,
+        anchorBlockNumber: result.blockNumber,
+        credentialCount: unanchored.length,
+      };
+    });
   }
 }

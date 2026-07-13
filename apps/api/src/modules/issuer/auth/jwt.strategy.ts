@@ -7,6 +7,7 @@ interface JwtPayload {
   sub: string;
   email: string;
   type?: 'refresh';
+  role?: 'holder';
 }
 
 export interface CurrentIssuerPayload {
@@ -27,6 +28,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   validate(payload: JwtPayload): CurrentIssuerPayload {
     if (payload.type === 'refresh') {
       throw new UnauthorizedException('Refresh tokens cannot be used as access tokens');
+    }
+    if (payload.role === 'holder') {
+      throw new UnauthorizedException('Holder tokens cannot be used as issuer credentials');
     }
 
     return { sub: payload.sub, email: payload.email };
