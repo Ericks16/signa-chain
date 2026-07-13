@@ -10,6 +10,7 @@ interface CredentialRecord {
   status: 'issued' | 'revoked';
   createdAt: string;
   vc: VerifiableCredential;
+  merkleRoot: string | null;
 }
 
 async function apiFetch(path: string, token: string): Promise<Response> {
@@ -84,15 +85,25 @@ export default async function WalletPage(): Promise<React.ReactElement> {
                 {cred.credentialId}
               </Link>
             </div>
-            <span
-              className={
-                cred.status === 'issued'
-                  ? 'rounded-full bg-success/10 px-3 py-1 text-xs text-success'
-                  : 'rounded-full bg-danger/10 px-3 py-1 text-xs text-danger'
-              }
-            >
-              {cred.status === 'issued' ? 'Válida' : 'Revocada'}
-            </span>
+            <div className="flex items-center gap-3">
+              {cred.merkleRoot && (
+                <span
+                  className="rounded-full bg-accent-blue/10 px-3 py-1 text-xs text-accent-blue"
+                  title={`Merkle root: ${cred.merkleRoot}`}
+                >
+                  Anclada on-chain
+                </span>
+              )}
+              <span
+                className={
+                  cred.status === 'issued'
+                    ? 'rounded-full bg-success/10 px-3 py-1 text-xs text-success'
+                    : 'rounded-full bg-danger/10 px-3 py-1 text-xs text-danger'
+                }
+              >
+                {cred.status === 'issued' ? 'Válida' : 'Revocada'}
+              </span>
+            </div>
           </div>
         ))}
       </div>

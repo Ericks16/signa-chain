@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import type { Issuer } from '@signa-chain/types';
 import { getSessionToken } from '../../lib/session';
 import { logoutAction, revokeAction } from './actions';
+import { AnchorBatchButton } from './anchor-batch-button';
 
 interface CredentialRecord {
   id: string;
@@ -10,6 +11,7 @@ interface CredentialRecord {
   subjectDid: string;
   status: 'issued' | 'revoked';
   createdAt: string;
+  merkleRoot: string | null;
 }
 
 async function apiFetch(path: string, token: string): Promise<Response> {
@@ -55,12 +57,15 @@ export default async function PortalPage(): Promise<React.ReactElement> {
         </form>
       </div>
 
-      <Link
-        href="/portal/issue"
-        className="w-fit rounded-lg bg-accent-purple px-6 py-2 font-semibold text-white transition hover:opacity-90"
-      >
-        Emitir credencial
-      </Link>
+      <div className="flex flex-wrap items-center gap-4">
+        <Link
+          href="/portal/issue"
+          className="w-fit rounded-lg bg-accent-purple px-6 py-2 font-semibold text-white transition hover:opacity-90"
+        >
+          Emitir credencial
+        </Link>
+        <AnchorBatchButton />
+      </div>
 
       <div className="flex flex-col gap-2">
         <h2 className="text-lg font-semibold">Credenciales emitidas</h2>
@@ -82,6 +87,14 @@ export default async function PortalPage(): Promise<React.ReactElement> {
               <p className="text-xs text-muted">{cred.subjectDid}</p>
             </div>
             <div className="flex items-center gap-3">
+              {cred.merkleRoot && (
+                <span
+                  className="rounded-full bg-accent-blue/10 px-3 py-1 text-xs text-accent-blue"
+                  title={`Merkle root: ${cred.merkleRoot}`}
+                >
+                  Anclada on-chain
+                </span>
+              )}
               <span
                 className={
                   cred.status === 'issued'
