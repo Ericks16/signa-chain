@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { KmsModule } from '../../common/kms/index.js';
+import { BlockchainModule } from '../../common/blockchain/blockchain.module.js';
 import { IssuerModule } from '../issuer/issuer.module.js';
 import { CredentialEntity } from './entities/credential.entity.js';
 import { CredentialService } from './credential.service.js';
 import { CredentialController } from './credential.controller.js';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CredentialEntity]), IssuerModule, KmsModule],
+  imports: [TypeOrmModule.forFeature([CredentialEntity]), IssuerModule, KmsModule, BlockchainModule],
   controllers: [CredentialController],
   providers: [CredentialService],
   exports: [CredentialService],

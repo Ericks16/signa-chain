@@ -5,7 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import type { VerifiableCredential } from '@signa-chain/types';
+import type { VerifiableCredential, MerkleProof } from '@signa-chain/types';
 
 export type CredentialStatus = 'issued' | 'revoked';
 
@@ -31,6 +31,21 @@ export class CredentialEntity {
 
   @Column({ name: 'revoked_at', nullable: true, type: 'timestamptz' })
   revokedAt!: Date | null;
+
+  @Column({ name: 'revocation_tx_hash', nullable: true, type: 'varchar' })
+  revocationTxHash!: string | null;
+
+  @Column({ name: 'merkle_proof', nullable: true, type: 'jsonb' })
+  merkleProof!: MerkleProof | null;
+
+  @Column({ name: 'merkle_root', nullable: true, type: 'varchar' })
+  merkleRoot!: string | null;
+
+  @Column({ name: 'anchor_tx_hash', nullable: true, type: 'varchar' })
+  anchorTxHash!: string | null;
+
+  @Column({ name: 'anchor_block_number', nullable: true, type: 'integer' })
+  anchorBlockNumber!: number | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

@@ -4,7 +4,14 @@ import { Contract, JsonRpcProvider, Wallet, type ContractTransactionResponse } f
 
 const CREDENTIAL_ANCHOR_ABI = [
   'function registerIssuer(string did, string publicKeyMultibase) external',
+  'function anchorBatch(bytes32 merkleRoot, uint32 credentialCount, string batchId, string issuerId) external returns (uint256 anchorId)',
+  'function revokeCredential(bytes32 credentialHash, string issuerId) external',
 ];
+
+export interface AnchorBatchResult {
+  txHash: string;
+  blockNumber: number;
+}
 
 @Injectable()
 export class BlockchainService {
@@ -61,6 +68,75 @@ export class BlockchainService {
     }
 
     this.logger.log(`Issuer ${did} registered on-chain — tx ${receipt.hash}`);
+    return receipt.hash;
+  }
+
+  /**
+   * Anchors a Merkle root representing a batch of credentials via
+   * CredentialAnchor.anchorBatch(). Returns null when anchoring isn't configured —
+   * callers must treat that as "batch not anchored", not silently succeed.
+   */
+  async anchorBatch(
+    merkleRoot: string,
+    credentialCount: number,
+    batchId: string,
+    issuerDid: string,
+  ): Promise<AnchorBatchResult | null> {
+    const contract = this.getContract();
+    if (!contract) {
+      this.logger.warn(
+        `anchorBatch skipped for batch ${batchId} — CredentialAnchor is not configured ` +
+          '(CREDENTIAL_ANCHOR_ADDRESS / CREDENTIAL_ANCHOR_SIGNER_KEY).',
+      );
+      return null;
+    }
+
+    const anchorBatch = contract.getFunction('anchorBatch');
+    const tx = (await anchorBatch(
+      merkleRoot,
+      credentialCount,
+      batchId,
+      issuerDid,
+    )) as ContractTransactionResponse;
+    const receipt = await tx.wait();
+    if (!receipt) {
+      throw new Error(`anchorBatch transaction for batch ${batchId} did not produce a receipt`);
+    }
+
+    this.logger.log(`Batch ${batchId} anchored on-chain — tx ${receipt.hash}`);
+    return { txHash: receipt.hash, blockNumber: receipt.blockNumber };
+  }
+
+  /**
+   * Records a credential revocation on CredentialAnchor.revokeCredential() as a
+   * defense-in-depth signal alongside the off-chain revocation flag (the DB status
+   * column is the authoritative source used by verification). Returns null when
+   * anchoring isn't configured — callers treat that as an acceptable no-op.
+   */
+  async revokeCredentialOnChain(
+    credentialHash: string,
+    issuerDid: string,
+  ): Promise<string | null> {
+    const contract = this.getContract();
+    if (!contract) {
+      this.logger.warn(
+        `revokeCredentialOnChain skipped for ${credentialHash} — CredentialAnchor is not configured ` +
+          '(CREDENTIAL_ANCHOR_ADDRESS / CREDENTIAL_ANCHOR_SIGNER_KEY).',
+      );
+      return null;
+    }
+
+    const revokeCredential = contract.getFunction('revokeCredential');
+    const tx = (await revokeCredential(
+      credentialHash,
+      issuerDid,
+    )) as ContractTransactionResponse;
+    const receipt = await tx.wait();
+    if (!receipt) {
+      throw new Error(`revokeCredential transaction for ${credentialHash} did not produce a receipt`);
+    }
+
+    this.logger.log(`Credential ${credentialHash} revoked on-chain — tx ${receipt.hash}`);
     return receipt.hash;
   }
 }

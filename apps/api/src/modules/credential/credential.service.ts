@@ -1,12 +1,23 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import { Inject, Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { issueCredential } from '@signa-chain/vc-sdk';
+import { IsNull, Repository } from 'typeorm';
+import { keccak256, toUtf8Bytes } from 'ethers';
+import { issueCredential, buildMerkleBatch } from '@signa-chain/vc-sdk';
 import type { VerifiableCredential, AcademicCredentialSubject } from '@signa-chain/types';
 import { KMS_PROVIDER_TOKEN, type KmsProvider } from '../../common/kms/index.js';
+import { BlockchainService } from '../../common/blockchain/blockchain.service.js';
 import { IssuerService } from '../issuer/issuer.service.js';
 import { CredentialEntity } from './entities/credential.entity.js';
 import type { IssueCredentialDto } from './dto/issue-credential.dto.js';
+
+export interface AnchorBatchSummary {
+  batchId: string;
+  merkleRoot: string;
+  anchorTxHash: string;
+  anchorBlockNumber: number;
+  credentialCount: number;
+}
 
 @Injectable()
 export class CredentialService {
@@ -14,6 +25,7 @@ export class CredentialService {
     @InjectRepository(CredentialEntity)
     private readonly repo: Repository<CredentialEntity>,
     private readonly issuerService: IssuerService,
+    private readonly blockchainService: BlockchainService,
     @Inject(KMS_PROVIDER_TOKEN)
     private readonly kmsProvider: KmsProvider,
   ) {}
@@ -84,6 +96,72 @@ export class CredentialService {
 
     entity.status = 'revoked';
     entity.revokedAt = new Date();
+
+    const issuer = await this.issuerService.findById(issuerId);
+    if (issuer) {
+      const credentialHash = keccak256(toUtf8Bytes(entity.credentialId));
+      const txHash = await this.blockchainService.revokeCredentialOnChain(
+        credentialHash,
+        issuer.did,
+      );
+      entity.revocationTxHash = txHash;
+    }
+
     return this.repo.save(entity);
+  }
+
+  /**
+   * Anchors every un-anchored 'issued' credential for this issuer as one Merkle
+   * batch: builds the tree off-chain (vc-sdk), submits the root via
+   * CredentialAnchor.anchorBatch(), then persists each credential's proof.
+   * Throws when anchoring isn't configured — pretending success here would be
+   * dishonest about what's actually anchored on-chain.
+   */
+  async anchorPendingBatch(issuerId: string): Promise<AnchorBatchSummary> {
+    const issuer = await this.issuerService.findById(issuerId);
+    if (!issuer) {
+      throw new NotFoundException('Issuer not found');
+    }
+
+    const unanchored = await this.repo.find({
+      where: { issuerId, status: 'issued', merkleRoot: IsNull() },
+    });
+    if (unanchored.length === 0) {
+      throw new NotFoundException('No unanchored credentials to batch');
+    }
+
+    const batchId = randomUUID();
+    const batch = buildMerkleBatch(unanchored.map((c) => c.vc));
+
+    const result = await this.blockchainService.anchorBatch(
+      batch.root,
+      unanchored.length,
+      batchId,
+      issuer.did,
+    );
+    if (!result) {
+      throw new ServiceUnavailableException(
+        'CredentialAnchor is not configured — cannot anchor on-chain',
+      );
+    }
+
+    const byCredentialId = new Map(batch.credentials.map((c) => [c.credential.id, c]));
+    for (const entity of unanchored) {
+      const anchored = byCredentialId.get(entity.credentialId);
+      if (!anchored) continue;
+      entity.merkleProof = anchored.merkleProof;
+      entity.merkleRoot = batch.root;
+      entity.anchorTxHash = result.txHash;
+      entity.anchorBlockNumber = result.blockNumber;
+    }
+    await this.repo.save(unanchored);
+
+    return {
+      batchId,
+      merkleRoot: batch.root,
+      anchorTxHash: result.txHash,
+      anchorBlockNumber: result.blockNumber,
+      credentialCount: unanchored.length,
+    };
   }
 }

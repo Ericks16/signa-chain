@@ -23,6 +23,9 @@ export class VerificationService {
       credential: entity.vc,
       isRevoked: entity.status === 'revoked',
       resolveIssuerName: async () => issuer?.name,
+      ...(entity.merkleProof && entity.merkleRoot
+        ? { merkleProof: entity.merkleProof, anchoredRootHex: entity.merkleRoot }
+        : {}),
     });
   }
 }
