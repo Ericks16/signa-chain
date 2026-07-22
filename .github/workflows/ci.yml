@@ -120,6 +120,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build packages/types
+        run: pnpm --filter @signa-chain/types build
+
+      - name: Build vc-sdk
+        run: pnpm --filter @signa-chain/vc-sdk build
+
       - name: Run API e2e tests
         run: pnpm --filter @signa-chain/api run test:e2e
 
@@ -155,6 +161,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build packages/types
+        run: pnpm --filter @signa-chain/types build
+
+      - name: Build vc-sdk
+        run: pnpm --filter @signa-chain/vc-sdk build
 
       - name: Install Playwright browsers
         run: pnpm --filter @signa-chain/web exec playwright install --with-deps chromium
