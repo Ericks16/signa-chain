@@ -123,11 +123,64 @@ jobs:
       - name: Run API e2e tests
         run: pnpm --filter @signa-chain/api run test:e2e
 
+  # ── Web e2e tests (Playwright) ─────────────────────────────────────────── #
+  test-web-e2e:
+    name: Web e2e Tests (Playwright)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: signachain
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: signachain_dev
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U signachain -d signachain_dev"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @signa-chain/web exec playwright install --with-deps chromium
+
+      - name: Run web e2e tests (spins up its own API + web servers)
+        run: pnpm --filter @signa-chain/web run test:e2e
+
+      # next build/lint rewrites apps/web/tsconfig.json — global-teardown.ts already
+      # restores it, this is just a defensive backstop if the run crashes before that.
+      - name: Restore tsconfig.json mutated by next build
+        if: always()
+        run: git checkout -- apps/web/tsconfig.json
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
+
   # ── Build check ───────────────────────────────────────────────────────── #
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [quality, test-sdk, test-contracts, test-api]
+    needs: [quality, test-sdk, test-contracts, test-api, test-web-e2e]
     steps:
       - uses: actions/checkout@v4
 

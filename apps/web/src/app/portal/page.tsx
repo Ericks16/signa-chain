@@ -49,7 +49,9 @@ export default async function PortalPage(): Promise<React.ReactElement> {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{issuer.name}</h1>
-          <p className="font-mono text-xs text-muted">{issuer.did}</p>
+          <p className="font-mono text-xs text-muted" data-testid="issuer-did">
+            {issuer.did}
+          </p>
         </div>
         <form action={logoutAction}>
           <button type="submit" className="text-sm text-muted hover:text-foreground">
@@ -81,6 +83,7 @@ export default async function PortalPage(): Promise<React.ReactElement> {
             <div className="flex flex-col gap-1">
               <Link
                 href={`/verify/${encodeURIComponent(cred.credentialId)}`}
+                data-testid="credential-link"
                 className="break-all font-mono text-xs text-accent-blue hover:underline"
               >
                 {cred.credentialId}
@@ -97,6 +100,7 @@ export default async function PortalPage(): Promise<React.ReactElement> {
                 </span>
               )}
               <span
+                data-testid="credential-status"
                 className={
                   cred.status === 'issued'
                     ? 'rounded-full bg-success/10 px-3 py-1 text-xs text-success'

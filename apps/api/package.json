@@ -16,7 +16,8 @@
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
     "migration:run:prod": "typeorm migration:run -d dist/database/data-source.js",
     "seed:issuer": "node dist/database/seeds/seed-issuer.js",
-    "register-issuer:onchain": "node dist/database/seeds/register-issuer-onchain.js"
+    "register-issuer:onchain": "node dist/database/seeds/register-issuer-onchain.js",
+    "e2e-web:reset-db": "node scripts/reset-e2e-db.cjs"
   },
   "dependencies": {
     "@fastify/helmet": "^13.0.1",

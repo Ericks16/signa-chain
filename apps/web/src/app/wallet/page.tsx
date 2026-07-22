@@ -57,7 +57,9 @@ export default async function WalletPage(): Promise<React.ReactElement> {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{holder.name}</h1>
-          <p className="font-mono text-xs text-muted">{holder.did}</p>
+          <p className="font-mono text-xs text-muted" data-testid="holder-did">
+            {holder.did}
+          </p>
         </div>
         <form action={logoutAction}>
           <button type="submit" className="text-sm text-muted hover:text-foreground">
@@ -95,6 +97,7 @@ export default async function WalletPage(): Promise<React.ReactElement> {
                 </span>
               )}
               <span
+                data-testid="credential-status"
                 className={
                   cred.status === 'issued'
                     ? 'rounded-full bg-success/10 px-3 py-1 text-xs text-success'

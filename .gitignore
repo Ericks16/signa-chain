@@ -41,6 +41,12 @@ contracts/deployments/
 coverage/
 *.lcov
 
+# Playwright (apps/web e2e suite)
+apps/web/test-results/
+apps/web/playwright-report/
+apps/web/blob-report/
+apps/api/.e2e-web-keys/
+
 # Logs
 *.log
 logs/
