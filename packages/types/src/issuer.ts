@@ -13,9 +13,10 @@ export interface Issuer {
 }
 
 export interface IssuerRegistrationRequest {
+  email: string;
+  password: string;
   name: string;
   legalName: string;
   country: string;
   website?: string;
-  publicKeyMultibase: string;
 }

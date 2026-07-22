@@ -5,6 +5,7 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { deriveDidKeyDocument } from '@signa-chain/vc-sdk';
 import { IssuerService } from '../../src/modules/issuer/issuer.service.js';
 import { KMS_PROVIDER_TOKEN, type KmsProvider } from '../../src/common/kms/index.js';
+import { TEST_ENV } from '../test-env.js';
 
 export const TEST_ISSUER_PASSWORD = 'Test-Password-123!';
 
@@ -58,6 +59,43 @@ export async function loginIssuer(
     .send({ email, password })
     .expect(201);
   return res.body.accessToken as string;
+}
+
+/** Registers an issuer through the real HTTP onboarding endpoint (POST /v1/issuer/register). */
+export async function registerTestIssuer(
+  app: NestFastifyApplication,
+  overrides: Partial<{
+    email: string;
+    password: string;
+    name: string;
+    legalName: string;
+    country: string;
+    website: string;
+  }> = {},
+): Promise<{ email: string; password: string; accessToken: string; refreshToken: string }> {
+  const suffix = randomUUID();
+  const email = overrides.email ?? `onboarded-issuer-${suffix}@example.com`;
+  const password = overrides.password ?? TEST_ISSUER_PASSWORD;
+
+  const res = await request(app.getHttpServer())
+    .post('/v1/issuer/register')
+    .set('x-onboarding-secret', TEST_ENV.ISSUER_ONBOARDING_SECRET)
+    .send({
+      email,
+      password,
+      name: overrides.name ?? 'Onboarded University',
+      legalName: overrides.legalName ?? 'Onboarded University Legal Name',
+      country: overrides.country ?? 'EC',
+      ...(overrides.website ? { website: overrides.website } : {}),
+    })
+    .expect(201);
+
+  return {
+    email,
+    password,
+    accessToken: res.body.accessToken as string,
+    refreshToken: res.body.refreshToken as string,
+  };
 }
 
 export interface HolderFixture {

@@ -11,6 +11,7 @@ export const TEST_ENV = {
   KMS_PROVIDER: 'local',
   // AES-256-GCM needs exactly 32 bytes — fixed test-only key, never used outside this suite.
   KMS_LOCAL_MASTER_KEY: Buffer.alloc(32, 7).toString('base64'),
+  ISSUER_ONBOARDING_SECRET: 'e2e-test-only-onboarding-secret-do-not-use-in-production',
 } as const;
 
 export const TEST_ADMIN_DATABASE_URL = 'postgresql://signachain:password@localhost:5433/postgres';
